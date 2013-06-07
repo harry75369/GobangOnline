@@ -41,9 +41,15 @@
           text-align: left;
           font-size: 18px;
         }
+        .hero-unit [class*="row"] {
+          padding-top: 25px;
+        }
         </style>
+        <script type="text/javascript">
+           function focus_on_input() {document.getElementById("username").focus();}
+        </script>
     </head>
-    <body>
+    <body onload="focus_on_input()">
         <!--[if lt IE 7]>
             <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
         <![endif]-->
@@ -78,9 +84,9 @@
                     <form class="well" method="post" action="/">
                       <h3>Please sign in</h3>
                       <label>Username</label>
-                      <input type="text" name="username" class="input-block-level"></input>
+                      <input type="text" id="username" class="input-block-level"></input>
                       <label>Password</label>
-                      <input type="password" name="password" class="input-block-level"></input>
+                      <input type="password" id="password" class="input-block-level"></input>
                       <div class="btn-group">
                         <button type="submit" class="btn btn-primary btn-large">Sign in</button>
                         <button class="btn btn-primary btn-large dropdown-toggle" data-toggle="dropdown">
