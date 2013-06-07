@@ -38,8 +38,19 @@
               <a class="brand" href="#">GOBANG ONLINE</a>
               <div class="nav-collapse collapse pull-right">
                 <ul class="nav">
-                  <li><a class="inactive" href="#about" data-toggle="modal">About</a></li>
+                  <li><a href="#about" data-toggle="modal">About</a></li>
                 </ul>
+                <div class="btn-group pull-right">
+                  <a href="#" class="btn dropdown-toggle" data-toggle="dropdown">
+                    <i class="icon-user"></i> Username <span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu">
+                    <li><a href="#rank">Rank</a></li>
+                    <li><a href="#settings">Settings</a></li>
+                    <li class="divider"></li>
+                    <li><a href="#">Log out</a></li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -48,11 +59,42 @@
         <div class="container">
 
           <div class="row">
-            <div class="span4" style="background-color:red">
-              <p>left</p>
+            <div class="span2 well pull-left">
+              <label>Online User</label>
+              <table class="table table-condensed">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Username</th>
+                    <th>Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>Mark</td>
+                    <td>999</td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td>Jacob</td>
+                    <td>888</td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td>Larry</td>
+                    <td>777</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div class="span8" style="background-color:green">
-              <p>right</p>
+            <div class="span9 pull-right">
+              <div class="row well" style="background-color:green">
+                right-up
+              </div>
+              <div class="row well" style="background-color:blue">
+                right-down
+              </div>
             </div>
           </div>
 
