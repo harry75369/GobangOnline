@@ -1,6 +1,6 @@
 var express = require('express')    // Web Framework
   , http = require('http')          // HTTP Server
-  , socket = require('./socket')    // WebSocket Server
+  , socket = require('socket.io')   // WebSocket Server
   , passport = require('passport')  // User Module
   , mongoose = require('mongoose')  // Database Module
   , path = require('path');         // System Utility
@@ -11,7 +11,11 @@ var express = require('express')    // Web Framework
 // Gobang Online configurations
 //
 // --------------------------------------------------------------- //
-var app = express();
+var app = express();                // instantiate an express app
+var server = http.createServer(app);// create an HTTP server
+var io = socket.listen(server);     // bind web socket to HTTP server
+
+// --- express app configurations
 app.configure(function() {
   app.set('port', 8888);
   app.set('views', path.join(__dirname, 'views'));
@@ -32,6 +36,16 @@ app.configure('development', function() {
   app.use(express.errorHandler());
 });
 
+// --- web socket configurations
+io.configure(function() {
+  io.set('log level', 1);
+  io.set('authorization', function(handshakeData, accept) {
+    console.log(handshakeData.headers);
+    accept(null, true);
+  });
+});
+
+// --- database configurations
 mongoose.connect('mongodb://localhost/gobang-online');
 mongoose.connection.on('error', function(err) { if (err) throw new Error(err); });
 mongoose.connection.on('open', function() {
@@ -45,6 +59,7 @@ var User = mongoose.model('User', new mongoose.Schema({
 User.update({username: 'admin'}, {password: 'admin', score: 0}, {multi:false, upsert:true},
             function (err) { if (err) throw new Error(err); })
 
+// --- user module configurations
 var LocalStrategy = require('passport-local').Strategy;
 passport.use(new LocalStrategy(
   function(username, password, done) {
@@ -108,8 +123,6 @@ app.use(function(req, res, next) {
 // Gobang Online fire up!
 //
 // --------------------------------------------------------------- //
-var server = http.createServer(app);
-socket.listen(server);
 server.listen(app.get('port'), function() {
   console.log('Gobang Online Server is running on port ' + app.get('port'));
 });
