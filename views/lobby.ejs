@@ -132,7 +132,24 @@
 
         <script src='/socket.io/socket.io.js' type='text/javascript'></script>
         <script>
-          var socket = io.connect('http://127.0.0.1:8888');
+          var socket = io.connect();
+          socket.on('error', function() {
+            alert("socket connection error!");
+          });
+          socket.on('connection', function() {
+          });
+          $(document).ready(function() {
+            socket.on('user list', function(data) {
+              if ( data ) {
+                $('#user-list').text(JSON.stringify(data));
+              }
+            });
+            socket.on('room list', function(data) {
+              if ( data ) {
+                $('#room-list').text(JSON.stringify(data));
+              }
+            });
+          });
         </script>
     </body>
 </html>

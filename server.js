@@ -4,6 +4,9 @@ var express = require('express')    // Web Framework
   , passport = require('passport')  // User Module
   , mongoose = require('mongoose')  // Database Module
   , path = require('path');         // System Utility
+var passport_socketio = require('passport.socketio');
+var underscore = require('underscore');
+var async = require('async');
 
 
 // --------------------------------------------------------------- //
@@ -14,6 +17,7 @@ var express = require('express')    // Web Framework
 var app = express();                // instantiate an express app
 var server = http.createServer(app);// create an HTTP server
 var io = socket.listen(server);     // bind web socket to HTTP server
+var memstore = new express.session.MemoryStore();
 
 // --- express app configurations
 app.configure(function() {
@@ -25,7 +29,11 @@ app.configure(function() {
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(express.cookieParser('oh it\'s a secret'));
-  app.use(express.session());
+  app.use(express.session({
+    store: memstore,
+    key: 'express.sid',
+    secret: 'oh it\'s a secret'
+  }));
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(app.router);
@@ -39,10 +47,18 @@ app.configure('development', function() {
 // --- web socket configurations
 io.configure(function() {
   io.set('log level', 1);
-  io.set('authorization', function(handshakeData, accept) {
-    console.log(handshakeData.headers);
-    accept(null, true);
-  });
+  io.set('authorization', passport_socketio.authorize({
+    cookieParser: express.cookieParser,
+    key:          'express.sid',
+    secret:       'oh it\'s a secret',
+    store:        memstore,
+    fail:         function(data, accept) {
+      accept(null, false);
+    },
+    seccess:      function(data, accept) {
+      accept(null, true);
+    }
+  }));
 });
 
 // --- database configurations
@@ -116,6 +132,39 @@ app.use(function(req, res, next) {
   res.status(404);
   res.sendfile(path.join(app.get('wwwroot'), '404.html'));
 });
+
+var connected_clients = [];
+io.sockets.on('connection', function(client) {
+  console.log("user connected: ", client.handshake.user.username);
+  //console.log(client);
+
+  connected_clients.push(client);
+  client.on('disconnect', function() {
+    connected_clients.splice(connected_clients.indexOf(client), 1);
+  });
+
+  send_user_list(client);
+  send_room_list(client);
+});
+
+var send_user_list = function(socket) {
+  async.map(connected_clients, function(client, callback) {
+    User.findById(client.handshake.user.id, function(err, user) {
+      var user_info = [];
+      user_info.push(user.username);
+      user_info.push(user.score);
+      user_info.push(client.manager.roomClients[client.id]);
+      callback(null, user_info);
+    });
+  },
+  function(err, user_list) {
+    socket.emit('user list', user_list);
+  });
+};
+
+var send_room_list = function(socket) {
+  socket.emit('room list', io.sockets.manager.rooms);
+};
 
 
 // --------------------------------------------------------------- //

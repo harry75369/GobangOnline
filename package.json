@@ -9,7 +9,10 @@
     "mongoose": "3",
     "passport": ">=0.0.0",
     "passport-local": ">=0.0.0",
-    "ejs": ">=0.0.0"
+    "ejs": ">=0.0.0",
+    "passport.socketio": ">=0.0.0",
+    "underscore": ">=0.0.0",
+    "async": "~0.2.9",
   },
   "licence": "MIT"
 }
