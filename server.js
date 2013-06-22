@@ -1,24 +1,24 @@
-var express = require('express')    // Web Framework
-  , http = require('http')          // HTTP Server
-  , socket = require('socket.io')   // WebSocket Server
-  , passport = require('passport')  // User Module
-  , mongoose = require('mongoose')  // Database Module
-  , path = require('path');         // System Utility
-var passport_socketio = require('passport.socketio');
-var underscore = require('underscore');
-var async = require('async');
-var flash = require('connect-flash');
+var express = require('express')                     // Web Framework
+  , http = require('http')                           // HTTP Server
+  , flash = require('connect-flash')                 // Flash Message Module
+  , passport = require('passport')                   // User Module
+  , socket = require('socket.io')                    // WebSocket Server
+  , passport_socketio = require('passport.socketio') // User Module for WebSocket
+  , mongoose = require('mongoose')                   // Database Module
+  , underscore = require('underscore')               // Javascript Utility
+  , async = require('async')                         // Async-programming Utility
+  , path = require('path');                          // System Utility
 
 
-// --------------------------------------------------------------- //
+// ------------------------------------------------------------------------- //
 //
 // Gobang Online configurations
 //
-// --------------------------------------------------------------- //
-var app = express();                // instantiate an express app
-var server = http.createServer(app);// create an HTTP server
-var io = socket.listen(server);     // bind web socket to HTTP server
-var memstore = new express.session.MemoryStore();
+// ------------------------------------------------------------------------- //
+var app = express();                              // instantiate an express app
+var server = http.createServer(app);              // create an HTTP server
+var io = socket.listen(server);                   // bind web socket to HTTP server
+var memstore = new express.session.MemoryStore(); // session store method
 
 // --- express app configurations
 app.configure(function() {
@@ -121,8 +121,7 @@ app.get('/lobby', function(req, res) {
 });
 app.get('/room/:id', function(req, res) {
   if ( req.isAuthenticated() ) {
-    res.render('room', {'roomid': req.params.id,
-                        'username': req.user.username });
+    res.render('room', {'roomid': req.params.id, 'username': req.user.username });
   } else {
     res.redirect('/');
   }
