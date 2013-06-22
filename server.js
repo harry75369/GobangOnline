@@ -7,6 +7,7 @@ var express = require('express')    // Web Framework
 var passport_socketio = require('passport.socketio');
 var underscore = require('underscore');
 var async = require('async');
+var flash = require('connect-flash');
 
 
 // --------------------------------------------------------------- //
@@ -34,6 +35,7 @@ app.configure(function() {
     key: 'express.sid',
     secret: 'oh it\'s a secret'
   }));
+  app.use(flash());
   app.use(passport.initialize());
   app.use(passport.session());
   app.use(app.router);
@@ -80,7 +82,11 @@ var LocalStrategy = require('passport-local').Strategy;
 passport.use(new LocalStrategy(
   function(username, password, done) {
     User.findOne({ username: username, password: password }, function (err, user) {
-      done(err, user);
+      if ( err ) { return done(err); }
+      if ( !user ) {
+        return done(null, false, {message: 'Invalid username/password!'});
+      }
+      return done(null, user);
     });
   }
 ));
@@ -101,7 +107,7 @@ passport.deserializeUser(function(id, done) {
 // --------------------------------------------------------------- //
 app.get('/', function(req, res) {
   if ( req.isUnauthenticated() ) {
-    res.render('index');
+    res.render('index', {'message': req.flash('error')});
   } else {
     res.redirect('/lobby');
   }
@@ -125,9 +131,19 @@ app.get('/logout', function(req, res) {
   if ( req.isAuthenticated() ) { req.logOut(); }
   res.redirect('/');
 });
-// TODO: failure flash
-app.post('/', passport.authenticate('local', { failureRedirect: '/',
-                                               successRedirect: '/lobby' }));
+app.post('/', function(req, res, next) {
+  passport.authenticate('local', function(err, user, info) {
+    if ( err ) { return next(err); }
+    if ( !user ) {
+      req.flash('error', info.message);
+      return res.redirect('/');
+    }
+    req.logIn(user, function(err) {
+      if ( err ) { return next(err); }
+      return res.redirect('/');
+    });
+  })(req, res, next);
+});
 app.use(function(req, res, next) {
   res.status(404);
   res.sendfile(path.join(app.get('wwwroot'), '404.html'));
@@ -136,7 +152,6 @@ app.use(function(req, res, next) {
 var connected_clients = [];
 io.sockets.on('connection', function(client) {
   console.log("user connected: ", client.handshake.user.username);
-  //console.log(client);
 
   connected_clients.push(client);
   client.on('disconnect', function() {

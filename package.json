@@ -13,6 +13,7 @@
     "passport.socketio": ">=0.0.0",
     "underscore": ">=0.0.0",
     "async": "~0.2.9",
+    "connect-flash": "~0.1.1"
   },
   "licence": "MIT"
 }

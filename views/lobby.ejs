@@ -59,32 +59,18 @@
         <div class="container">
 
           <div class="row">
-            <div id='user-list' class="span2 well pull-left">
-              <label>Online User</label>
-              <table class="table table-condensed">
+            <div class="span2 pull-left">
+              <h3>Online Users</h3>
+              <table class="table table-condensed table-hover">
                 <thead>
                   <tr>
-                    <th>Rank</th>
+                    <th>#</th>
                     <th>Username</th>
                     <th>Score</th>
+                    <th>Room</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td>1</td>
-                    <td>Mark</td>
-                    <td>999</td>
-                  </tr>
-                  <tr>
-                    <td>2</td>
-                    <td>Jacob</td>
-                    <td>888</td>
-                  </tr>
-                  <tr>
-                    <td>3</td>
-                    <td>Larry</td>
-                    <td>777</td>
-                  </tr>
+                <tbody id='user-list'>
                 </tbody>
               </table>
             </div>
@@ -141,7 +127,22 @@
           $(document).ready(function() {
             socket.on('user list', function(data) {
               if ( data ) {
-                $('#user-list').text(JSON.stringify(data));
+                //$('#user-list').text(JSON.stringify(data));
+                var trs = '';
+                data.sort(function(a,b){return a[1]-b[1];});
+                for ( var i=0; i < data.length; i++ ) {
+                  trs += '<tr>';
+                  trs += '<td>'+(i+1)+'</td>';
+                  trs += '<td>'+data[i][0]+'</td>';
+                  trs += '<td>'+data[i][1]+'</td>';
+                  var rooms = '';
+                  for ( var room in data[i][2] ) {
+                    if ( room ) rooms += room;
+                  }
+                  if ( !rooms ) rooms = 'Lobby';
+                  trs += '<td>'+rooms+'</td>';
+                }
+                $('#user-list').html(trs);
               }
             });
             socket.on('room list', function(data) {

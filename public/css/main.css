@@ -1,22 +1,19 @@
-
-
-/* ==========================================================================
-   Author's custom styles
-   ========================================================================== */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+.hero-unit {
+  background-color: #FFFFFF;
+  background-image: url("/img/Chess.jpg");
+  background-position: 50% top;
+  background-repeat: no-repeat;
+  color: #FFFFFF;
+  height: 600px;
+  overflow: hidden;
+  text-align: center;
+}
+.hero-unit [class*="row"] {
+  padding-top: 25px;
+}
+.input-block-level {
+  max-width: 250px;
+}
+.dropdown-menu li {
+  text-align: left;
+}
