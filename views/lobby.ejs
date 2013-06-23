@@ -29,7 +29,7 @@
 
         <div class="navbar navbar-inverse navbar-fixed-top">
           <div class="navbar-inner">
-            <div class="container">
+            <div class="container-fluid">
               <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
@@ -56,10 +56,10 @@
           </div>
         </div>
 
-        <div class="container">
+        <div class="container-fluid">
 
-          <div class="row">
-            <div class="span2 pull-left">
+          <div class="row-fluid">
+            <div class="user-pannel span3">
               <h3>Online Users</h3>
               <table class="table table-condensed table-hover">
                 <thead>
@@ -74,12 +74,40 @@
                 </tbody>
               </table>
             </div>
-            <div class="span9 pull-right">
-              <div id="room-list" class="row well">
-                right-up
+            <div class="span9">
+              <div class="row-fluid">
+                <div class="room-pannel span12">
+                  <h3>Room List</h3>
+                  <div id="room-list">
+                    <div class="row-fluid show-grid">
+                      <div class="span3">
+                        <h4>No.1 - xxx</h4>
+                        <label>status: waiting</label>
+                        <label>2</label>
+                      </div>
+                      <div class="span3">
+                        <h4>No.2 - yyy</h4>
+                        <label>status: battling</label>
+                        <label>2</label>
+                      </div>
+                      <div class="span3">3</div>
+                      <div class="span3">4</div>
+                    </div>
+                    <div class="row-fluid show-grid">
+                      <div class="span3">5</div>
+                      <div class="span3">6</div>
+                      <div class="span3">7</div>
+                      <div class="span3">8</div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div id="lobby-messages" class="row well">
-                right-down
+              <div class="row-fluid">
+                <div class="chat-pannel span12">
+                  <h3>Messages</h3>
+                  <div class="messages" id="lobby-messages"></div>
+                  <input id="send-message" class="input-block-level" autocomplete="off"/>
+                </div>
               </div>
             </div>
           </div>
@@ -122,32 +150,53 @@
           socket.on('error', function() {
             alert("socket connection error!");
           });
-          socket.on('connection', function() {
+          socket.on('connect', function() {
+            socket.emit('join lobby', '<%= username %>');
+          });
+          socket.on('user list', function(data) {
+            if ( data ) {
+              //$('#user-list').text(JSON.stringify(data));
+              var trs = '';
+              data.sort(function(a,b){return b[1]-a[1];});
+              for ( var i=0; i < data.length; i++ ) {
+                trs += '<tr>';
+                trs += '<td>'+(i+1)+'</td>';
+                trs += '<td>'+data[i][0]+'</td>';
+                trs += '<td>'+data[i][1]+'</td>';
+                var rooms = '';
+                for ( var room in data[i][2] ) {
+                  if ( room ) rooms += room;
+                }
+                if ( !rooms ) rooms = 'Lobby';
+                trs += '<td>'+rooms+'</td>';
+              }
+              $('#user-list').html(trs);
+            }
+          });
+          socket.on('room list', function(data) {
+            if ( data ) {
+              //$('#room-list').text(JSON.stringify(data));
+            }
+          });
+          socket.on('message', function(html) {
+            $('#lobby-messages').append(html);
+            $('#lobby-messages').scrollTop($('#lobby-messages').prop('scrollHeight'));
+          });
+          socket.on('user update', function(message) {
+            var html = "<i>"+message+"</i><br/>"
+            $('#lobby-messages').append(html);
+            socket.emit('get user list');
           });
           $(document).ready(function() {
-            socket.on('user list', function(data) {
-              if ( data ) {
-                //$('#user-list').text(JSON.stringify(data));
-                var trs = '';
-                data.sort(function(a,b){return a[1]-b[1];});
-                for ( var i=0; i < data.length; i++ ) {
-                  trs += '<tr>';
-                  trs += '<td>'+(i+1)+'</td>';
-                  trs += '<td>'+data[i][0]+'</td>';
-                  trs += '<td>'+data[i][1]+'</td>';
-                  var rooms = '';
-                  for ( var room in data[i][2] ) {
-                    if ( room ) rooms += room;
-                  }
-                  if ( !rooms ) rooms = 'Lobby';
-                  trs += '<td>'+rooms+'</td>';
-                }
-                $('#user-list').html(trs);
-              }
-            });
-            socket.on('room list', function(data) {
-              if ( data ) {
-                $('#room-list').text(JSON.stringify(data));
+            $('#send-message').focus();
+            $('#send-message').keypress(function(e) {
+              if ( e.which == 13 ) {
+                var message = $(this).val();
+                var html = "<b><%= username %>:</b> "+ message + "<br/>";
+                socket.send(html);
+                $('#lobby-messages').append(html);
+                $('#lobby-messages').scrollTop($('#lobby-messages').prop('scrollHeight'));
+                $(this).val('');
               }
             });
           });

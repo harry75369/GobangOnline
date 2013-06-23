@@ -11,9 +11,57 @@
 .hero-unit [class*="row"] {
   padding-top: 25px;
 }
-.input-block-level {
-  max-width: 250px;
+.alert {
+  padding: 3px 3px 3px 3px;
+  font-size: 12pt;
 }
 .dropdown-menu li {
   text-align: left;
+}
+.user-pannel {
+  margin: 15px 0px 15px 0px;
+  padding: 10px 10px 10px 10px;
+  border-style: 1px solid black;
+  box-shadow: 10px 20px 20px black;
+}
+.user-pannel h3 {
+  text-align: center;
+}
+.room-pannel {
+  margin: 15px 0px 15px 0px;
+  padding: 10px 15px 15px 15px;
+  border-style: 1px solid black;
+  box-shadow: 10px 20px 20px black;
+}
+.chat-pannel {
+  margin: 15px 0px 15px 0px;
+  padding: 10px 15px 15px 15px;
+  border-style: 1px solid black;
+  box-shadow: 10px 20px 20px black;
+}
+.test-pannel {
+  background-color: yellow;
+}
+.show-grid {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+.show-grid [class*="span"] {
+  background-color: #eee;
+  text-align: center;
+  -webkit-border-radius: 3px;
+     -moz-border-radius: 3px;
+          border-radius: 3px;
+  min-height: 30px;
+  line-height: 30px;
+}
+.show-grid:hover [class*="span"] {
+  background: #ddd;
+}
+.messages {
+  background-color: #e5e5e5;
+  height: 300px;
+  overflow: auto;
+  margin: 5px 5px 5px 5px;
+  border-style: 5px solid black;
 }

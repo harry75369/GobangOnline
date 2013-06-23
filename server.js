@@ -76,6 +76,11 @@ var User = mongoose.model('User', new mongoose.Schema({
 }));
 User.update({username: 'admin'}, {password: 'admin', score: 0}, {multi:false, upsert:true},
             function (err) { if (err) throw new Error(err); })
+User.update({username: 'bdahz'}, {password: 'bdahzz', score: 2}, {multi:false, upsert:true},
+            function (err) { if (err) throw new Error(err); })
+User.update({username: 'test'}, {password: 'test', score: 1}, {multi:false, upsert:true},
+            function (err) { if (err) throw new Error(err); })
+
 
 // --- user module configurations
 var LocalStrategy = require('passport-local').Strategy;
@@ -150,14 +155,25 @@ app.use(function(req, res, next) {
 
 var connected_clients = [];
 io.sockets.on('connection', function(client) {
-  console.log("user connected: ", client.handshake.user.username);
-
+  var username = client.handshake.user.username;
+  console.log("user connected: ", username);
   connected_clients.push(client);
+
   client.on('disconnect', function() {
     connected_clients.splice(connected_clients.indexOf(client), 1);
+    console.log("user disconnected: ", username);
+    io.sockets.emit('user update', username+" disconnected.");
   });
-
-  send_user_list(client);
+  client.on('message', function(data) {
+    client.broadcast.send(data);
+  });
+  client.on('join lobby', function(username) {
+    console.log("user joined lobby: ", username);
+    io.sockets.emit('user update', username+" joined lobby.");
+  });
+  client.on('get user list', function() {
+    send_user_list(client);
+  });
   send_room_list(client);
 });
 
