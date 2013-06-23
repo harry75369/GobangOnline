@@ -1,0 +1,28 @@
+body {
+  padding-top: 60px;
+  padding-bottom: 40px;
+}
+.hero-unit {
+  background-color: #FFFFFF;
+  background-image: url("/img/Chess.jpg");
+  background-position: 50% top;
+  background-repeat: no-repeat;
+  color: #FFFFFF;
+  height: 600px;
+  overflow: hidden;
+  text-align: center;
+}
+.hero-unit [class*="row"] {
+  padding-top: 25px;
+}
+.alert {
+  padding: 3px 3px 3px 3px;
+  font-size: 12pt;
+}
+.dropdown-menu li {
+  text-align: left;
+}
+.signin-form {
+  max-width: 280px;
+  margin: 0 auto;
+}

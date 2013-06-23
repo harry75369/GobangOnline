@@ -58,7 +58,6 @@ io.configure(function() {
       accept(null, false);
     },
     success:      function(data, accept) {
-      console.log(data);
       if ( underscore.contains(connected_users, data.user.username) ) {
         accept(null, false);
       } else {
