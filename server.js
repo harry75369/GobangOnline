@@ -57,8 +57,13 @@ io.configure(function() {
     fail:         function(data, accept) {
       accept(null, false);
     },
-    seccess:      function(data, accept) {
-      accept(null, true);
+    success:      function(data, accept) {
+      console.log(data);
+      if ( underscore.contains(connected_users, data.user.username) ) {
+        accept(null, false);
+      } else {
+        accept(null, true);
+      }
     }
   }));
 });
@@ -91,6 +96,9 @@ passport.use(new LocalStrategy(
       if ( !user ) {
         return done(null, false, {message: 'Invalid username/password!'});
       }
+      if ( underscore.contains(connected_users, username) ) {
+        return done(null, false, {message: 'User already signed in!'});
+      }
       return done(null, user);
     });
   }
@@ -114,19 +122,12 @@ app.get('/', function(req, res) {
   if ( req.isUnauthenticated() ) {
     res.render('index', {'message': req.flash('error')});
   } else {
-    res.redirect('/lobby');
+    res.redirect('/game');
   }
 });
-app.get('/lobby', function(req, res) {
+app.get('/game', function(req, res) {
   if ( req.isAuthenticated() ) {
-    res.render('lobby', {'username': req.user.username});
-  } else {
-    res.redirect('/');
-  }
-});
-app.get('/room/:id', function(req, res) {
-  if ( req.isAuthenticated() ) {
-    res.render('room', {'roomid': req.params.id, 'username': req.user.username });
+    res.render('game', {'username': req.user.username});
   } else {
     res.redirect('/');
   }
@@ -154,13 +155,16 @@ app.use(function(req, res, next) {
 });
 
 var connected_clients = [];
+var connected_users = [];
 io.sockets.on('connection', function(client) {
   var username = client.handshake.user.username;
   console.log("user connected: ", username);
   connected_clients.push(client);
+  connected_users.push(username);
 
   client.on('disconnect', function() {
     connected_clients.splice(connected_clients.indexOf(client), 1);
+    connected_users.splice(connected_users.indexOf(username), 1);
     console.log("user disconnected: ", username);
     io.sockets.emit('user update', username+" disconnected.");
   });

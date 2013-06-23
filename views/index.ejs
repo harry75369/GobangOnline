@@ -53,8 +53,8 @@
                 <h1>Gobang Online</h1>
                 <h2>A Multi-player Online Gobang Game</h2>
                 <div class="row-fluid">
-                  <div class="span2 offset5">
-                    <form method="post" action="/">
+                  <div class="span4 offset4">
+                    <form class="signin-form" method="post" action="/">
                       <h3>Please sign in</h3>
                       <% if ( typeof message !== 'undefined' && message.length > 0) {%>
                         <div class="alert alert-error"><%= message[0] %></div>
@@ -120,7 +120,7 @@
           </div>
         </div>
 
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+        <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>-->
         <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.9.1.min.js"><\/script>')</script>
 
         <script src="js/vendor/bootstrap.min.js"></script>
