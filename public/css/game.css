@@ -22,26 +22,3 @@ body {
   background-color: yellow;
   height: 300px;
 }
-.show-grid {
-  margin-top: 10px;
-  margin-bottom: 20px;
-}
-.show-grid [class*="span"] {
-  background-color: #eee;
-  text-align: center;
-  -webkit-border-radius: 3px;
-     -moz-border-radius: 3px;
-          border-radius: 3px;
-  min-height: 30px;
-  line-height: 30px;
-}
-.show-grid:hover [class*="span"] {
-  background: #ddd;
-}
-.messages {
-  background-color: #e5e5e5;
-  height: 300px;
-  overflow: auto;
-  margin: 5px 5px 5px 5px;
-  border-style: 5px solid black;
-}

@@ -166,18 +166,23 @@ io.sockets.on('connection', function(client) {
     connected_users.splice(connected_users.indexOf(username), 1);
     console.log("user disconnected: ", username);
     io.sockets.emit('user update', username+" disconnected.");
+    io.sockets.emit('room update');
   });
   client.on('message', function(data) {
     client.broadcast.send(data);
   });
   client.on('join lobby', function(username) {
     console.log("user joined lobby: ", username);
+    client.join(username);
     io.sockets.emit('user update', username+" joined lobby.");
+    io.sockets.emit('room update');
   });
   client.on('get user list', function() {
     send_user_list(client);
   });
-  send_room_list(client);
+  client.on('get room list', function() {
+    send_room_list(client);
+  });
 });
 
 var send_user_list = function(socket) {
