@@ -11,8 +11,15 @@
         <meta name="viewport" content="width=device-width">
 
         <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+          body {
+            padding-top: 60px;
+            padding-bottom: 40px;
+          }
+        </style>
         <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
         <link rel="stylesheet" href="css/index.css">
+        <link rel="stylesheet" href="css/font-awesome.min.css">
 
         <script src="js/vendor/modernizr-2.6.2-respond-1.1.0.min.js"></script>
     </head>
@@ -56,13 +63,13 @@
                       <input class="input-block-level" type="text" id="username" name="username" placeholder="Username"></input>
                       <input class="input-block-level" type="password" name="password" placeholder="Password"></input>
                       <div class="btn-group">
-                        <button type="submit" class="btn btn-primary btn-large">Sign in</button>
+                        <button type="submit" class="btn btn-primary btn-large"><i class="icon-signin"></i> Sign in</button>
                         <button class="btn btn-primary btn-large dropdown-toggle" data-toggle="dropdown">
-                          <span class="caret"></span>
+                          <i class="icon-caret-down"></i>
                         </button>
                         <ul class="dropdown-menu">
-                          <li><a href="#register" data-toggle="modal">Register</a></li>
-                          <li><a href="#forget" data-toggle="modal">Forget Password</a></li>
+                          <li><a href="#register" data-toggle="modal"><i class="icon-code-fork"></i> Register</a></li>
+                          <li><a href="#forget" data-toggle="modal"><i class="icon-question"></i> Forget Password</a></li>
                         </ul>
                       </div>
                     </form>
