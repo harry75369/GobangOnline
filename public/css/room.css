@@ -7,7 +7,16 @@
 }
 .board-pannel {
 }
-.room-info-pannel {
+.game-info-pannel {
+}
+.game-info-pannel .row-fluid {
+  margin: 10px auto 10px auto;
+}
+.game-info-pannel .row-fluid [class*="span"] {
+  text-align: center;
+}
+.user-info-pannel {
+  text-align: center;
 }
 .chat-pannel {
 }
