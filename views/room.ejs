@@ -114,33 +114,9 @@
           socket.on('error', function() {
             window.location.replace("/error.html");
           });
-          socket.on('user list in room', function(data) {
-            if ( data ) {
-              var trs = '';
-              data.sort(function(a,b){return b[1]-a[1];});
-              for ( var i=0; i < data.length; i++ ) {
-                trs += '<tr>';
-                trs += '<td>'+(i+1)+'</td>';
-                trs += '<td>'+data[i][0]+'</td>';
-                trs += '<td>'+data[i][1]+'</td>';
-                var rooms = '';
-                for ( var room in data[i][2] ) {
-                  if ( room ) rooms += room;
-                }
-                if ( !rooms ) rooms = 'Lobby';
-                trs += '<td>'+rooms+'</td>';
-              }
-              $('#user-list').html(trs);
-            }
-          });
-          socket.on('message', function(html) {
+          socket.on('private message', function(html) {
             $('#room-messages').append(html);
             $('#room-messages').scrollTop($('#room-messages').prop('scrollHeight'));
-          });
-          socket.on('user update', function(message) {
-            var html = "<i>"+message+"</i><br/>"
-            $('#lobby-messages').append(html);
-            socket.emit('get user list in room', '<%= roomname %>');
           });
           $(document).ready(function() {
             $('#send-message').focus();
@@ -150,7 +126,7 @@
                 if ( !message ) return;
                 message = $('<div></div>').text(message).html();
                 var html = "<b><%= username %>:</b> "+ message + "<br/>";
-                socket.send(html);
+                socket.emit('private message', '<%= roomname %>', html);
                 $('#room-messages').append(html);
                 $('#room-messages').scrollTop($('#room-messages').prop('scrollHeight'));
                 $(this).val('');

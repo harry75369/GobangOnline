@@ -277,37 +277,19 @@ io.sockets.on('connection', function(client) {
     io.sockets.emit('user update', manager.disconnectUser(client));
     io.sockets.emit('room update');
   });
-  client.on('message', function(data) {
-    client.broadcast.send(data);
+  client.on('public message', function(data) {
+    client.broadcast.emit('public message', data);
+  });
+  client.on('private message', function(room, data) {
+    client.broadcast.to(room).emit('private message', data);
   });
   client.on('get user list', function() {
-    //send_user_list(client);
     manager.sendUserList(client);
   });
   client.on('get room list', function() {
-    //send_room_list(client);
     manager.sendRoomList(client);
   });
 });
-
-//var send_user_list = function(socket) {
-  //async.map(connected_clients, function(client, callback) {
-    //User.findById(client.handshake.user.id, function(err, user) {
-      //var user_info = [];
-      //user_info.push(user.username);
-      //user_info.push(user.score);
-      //user_info.push(client.manager.roomClients[client.id]);
-      //callback(null, user_info);
-    //});
-  //},
-  //function(err, user_list) {
-    //socket.emit('user list', user_list);
-  //});
-//};
-
-//var send_room_list = function(socket) {
-  //socket.emit('room list', io.sockets.manager.rooms);
-//};
 
 
 // --------------------------------------------------------------- //

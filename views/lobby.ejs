@@ -192,7 +192,7 @@
               $('#room-list').html(html);
             }
           });
-          socket.on('message', function(html) {
+          socket.on('public message', function(html) {
             $('#lobby-messages').append(html);
             $('#lobby-messages').scrollTop($('#lobby-messages').prop('scrollHeight'));
           });
@@ -224,7 +224,7 @@
                 if ( !message ) return;
                 message = $('<div></div>').text(message).html();
                 var html = "<b><%= username %>:</b> "+ message + "<br/>";
-                socket.send(html);
+                socket.emit('public message', html);
                 $('#lobby-messages').append(html);
                 $('#lobby-messages').scrollTop($('#lobby-messages').prop('scrollHeight'));
                 $(this).val('');
