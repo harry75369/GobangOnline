@@ -142,11 +142,12 @@
           socket.on('error', function() {
             window.location.replace("/error.html");
           });
-          socket.on('connect', function() {
-            socket.emit('join lobby', '<%= username %>');
-          });
           socket.on('user list', function(data) {
             if ( !(_.isEmpty(data)) ) {
+              if ( typeof data == "string" ) {
+                $('#user-list').html('<div class="alert alert-error">'+data+'</div>');
+                return;
+              }
               var trs = '';
               data.sort(function(a,b){return b[1]-a[1];});
               for ( var i=0; i < data.length; i++ ) {
@@ -155,10 +156,10 @@
                 trs += '<td>'+data[i][0]+'</td>';
                 trs += '<td>'+data[i][1]+'</td>';
                 var rooms = '';
-                for ( var room in data[i][2] ) {
-                  if ( !(_.isEmpty(room)) ) {
+                for ( var j=0; j<data[i][2].length; j++ ) {
+                  if ( !(_.isEmpty(data[i][2][j])) ) {
                     if ( !(_.isEmpty(rooms)) ) rooms += ',';
-                    rooms += room.substr(1);
+                    rooms += data[i][2][j];
                   }
                 }
                 trs += '<td>'+rooms+'</td>';
@@ -195,15 +196,23 @@
             $('#lobby-messages').append(html);
             $('#lobby-messages').scrollTop($('#lobby-messages').prop('scrollHeight'));
           });
-          socket.on('user update', function(message) {
-            var html = "<i>"+message+"</i><br/>"
-            $('#lobby-messages').append(html);
+          socket.on('user update', function(messages) {
+            if ( messages && !(_.isEmpty(messages)) ) {
+              for ( var i=0; i<messages.length; i++ ) {
+                var html = "<i>"+messages[i]+"</i><br/>"
+                $('#lobby-messages').append(html);
+                $('#lobby-messages').scrollTop($('#lobby-messages').prop('scrollHeight'));
+              }
+            }
             socket.emit('get user list');
           });
-          socket.on('room update', function(message) {
-            if ( message && !(_.isEmpty(message)) ) {
-              var html = "<i>"+message+"</i><br/>"
-              $('#lobby-messages').append(html);
+          socket.on('room update', function(messages) {
+            if ( messages && !(_.isEmpty(messages)) ) {
+              for ( var i=0; i<messages.length; i++ ) {
+                var html = "<i>"+messages[i]+"</i><br/>"
+                $('#lobby-messages').append(html);
+                $('#lobby-messages').scrollTop($('#lobby-messages').prop('scrollHeight'));
+              }
             }
             socket.emit('get room list');
           });

@@ -11,10 +11,16 @@
         <meta name="viewport" content="width=device-width">
 
         <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+          body {
+            padding-top: 60px;
+            padding-bottom: 40px;
+          }
+        </style>
         <link rel="stylesheet" href="css/bootstrap-responsive.min.css">
-        <link rel="stylesheet" href="css/game.css">
         <link rel="stylesheet" href="css/font-awesome.min.css">
         <link rel="stylesheet" href="css/buttons.css">
+        <link rel="stylesheet" href="css/room.css">
 
         <script src="js/vendor/modernizr-2.6.2-respond-1.1.0.min.js"></script>
     </head>
@@ -32,19 +38,19 @@
                 <span class="icon-bar"></span>
               </button>
               <a class="brand" href="/">GOBANG ONLINE</a>
-              <div class="nav-collapse collapse pull-right">
-                <ul class="nav">
-                  <li><a href="#about" data-toggle="modal">About</a></li>
-                </ul>
+              <div class="nav-collapse collapse">
+                <a href="/lobby" class="btn"><i class="icon-circle-arrow-left"></i> Go Back</a>
                 <div class="btn-group pull-right">
                   <a href="#" class="btn dropdown-toggle" data-toggle="dropdown">
-                    <i class="icon-user"></i> <%= username %> <span class="caret"></span>
+                    <i class="icon-user"></i> <%= username %> <i class="icon-caret-down"></i>
                   </a>
                   <ul class="dropdown-menu">
-                    <li><a href="#rank">Overall Rank</a></li>
-                    <li><a href="#settings">Settings</a></li>
+                    <li><a href="#rank"><i class="icon-trophy"></i> Overall Rank</a></li>
                     <li class="divider"></li>
-                    <li><a href="/logout">Log out</a></li>
+                    <li><a href="#settings"><i class="icon-cog"></i> Settings</a></li>
+                    <li><a href="#about" data-toggle="modal"><i class="icon-info-sign"></i> About</a></li>
+                    <li class="divider"></li>
+                    <li><a href="/logout"><i class="icon-off"></i> Log out</a></li>
                   </ul>
                 </div>
               </div>
@@ -52,77 +58,24 @@
           </div>
         </div>
 
-        <div class="tabbable tabs-left">
-
-        <ul class="nav nav-tabs">
-          <li class="active"><a href="#lobby-page" data-toggle="tab">Lobby</a></li>
-          <li><a href="#room-page" data-toggle="tab">Room</a></li>
-        </ul>
-
-        <div class="tab-content">
-
-        <div class="container-fluid tab-pane active" id="lobby-page">
+        <div class="container-fluid">
           <div class="row-fluid">
-            <div class="pannel user-pannel span3">
-              <h3>Online Users</h3>
-              <table class="table table-condensed table-hover">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Username</th>
-                    <th>Score</th>
-                    <th>Room</th>
-                  </tr>
-                </thead>
-                <tbody id='user-list'>
-                </tbody>
-              </table>
-            </div>
-            <div class="span9">
+            <div class="pannel board-pannel span8"></div>
+            <div class="span4">
               <div class="row-fluid">
-                <div class="span12">
-                  <button class="button button-rounded button-flat-primary"><i class="icon-plus"></i> New Room</button>
-                </div>
-              </div>
-              <div class="row-fluid">
-                <div class="pannel room-pannel span12">
-                  <h3>Room List</h3>
-                  <div id="room-list">
-                  </div>
+                <div class="pannel room-info-pannel span12">
                 </div>
               </div>
               <div class="row-fluid">
                 <div class="pannel chat-pannel span12">
                   <h3>Messages</h3>
-                  <div class="messages" id="lobby-messages"></div>
+                  <div class="messages" id="room-messages"></div>
                   <input id="send-message" class="input-block-level" autocomplete="off"/>
                 </div>
               </div>
             </div>
           </div>
-        </div><!-- lobby -->
-
-        <div class="container-fluid tab-pane" id="room-page">
-          <div class="pannel test-pannel span8"></div>
-          <div class="span4">
-            <div class="row-fluid">
-              <div class="pannel span12">
-                <button class="btn btn-primary" id="new-room-btn">New Room</button>
-              </div>
-            </div>
-            <div class="row-fluid">
-              <div class="pannel test-pannel span12">
-              </div>
-            </div>
-            <div class="row-fluid">
-              <div class="pannel test-pannel span12">
-              </div>
-            </div>
-          </div>
         </div><!-- room -->
-
-        </div><!-- tab-content -->
-        </div><!-- tabbale -->
 
         <div id="about" class="modal hide fade">
           <div class="modal-header">
@@ -161,10 +114,7 @@
           socket.on('error', function() {
             window.location.replace("/error.html");
           });
-          socket.on('connect', function() {
-            socket.emit('join lobby', '<%= username %>');
-          });
-          socket.on('user list', function(data) {
+          socket.on('user list in room', function(data) {
             if ( data ) {
               var trs = '';
               data.sort(function(a,b){return b[1]-a[1];});
@@ -183,47 +133,14 @@
               $('#user-list').html(trs);
             }
           });
-          socket.on('room list', function(data) {
-            if ( data ) {
-              //$('#room-list').text(JSON.stringify(data));
-              var html = "";
-              while ( !_.isEmpty(data) ) {
-                var count = 4;
-                var row = '<div class="row-fluid">';
-                for ( var room_name in data ) {
-                  if ( room_name && !(_.isEmpty(room_name)) ) {
-                    count++;
-                    row += '<div class="span3"><button class="button button-rounded button-flat-action room-btn">'+room_name+'</button></div>';
-                    if ( count==4 ) break;
-                  }
-                  delete data[room_name];
-                }
-                row += '</div>';
-                if ( !($(row).is(":empty")) ) {
-                  html += row;
-                }
-              }
-              if ( _.isEmpty(html) ) {
-                html = "<p>No rooms yet.</p>";
-              }
-              $('#room-list').html(html);
-            }
-          });
           socket.on('message', function(html) {
-            $('#lobby-messages').append(html);
-            $('#lobby-messages').scrollTop($('#lobby-messages').prop('scrollHeight'));
+            $('#room-messages').append(html);
+            $('#room-messages').scrollTop($('#room-messages').prop('scrollHeight'));
           });
           socket.on('user update', function(message) {
             var html = "<i>"+message+"</i><br/>"
             $('#lobby-messages').append(html);
-            socket.emit('get user list');
-          });
-          socket.on('room update', function(message) {
-            if ( message ) {
-              var html = "<i>"+message+"</i><br/>"
-              $('#lobby-messages').append(html);
-            }
-            socket.emit('get room list');
+            socket.emit('get user list in room', '<%= roomname %>');
           });
           $(document).ready(function() {
             $('#send-message').focus();
@@ -234,8 +151,8 @@
                 message = $('<div></div>').text(message).html();
                 var html = "<b><%= username %>:</b> "+ message + "<br/>";
                 socket.send(html);
-                $('#lobby-messages').append(html);
-                $('#lobby-messages').scrollTop($('#lobby-messages').prop('scrollHeight'));
+                $('#room-messages').append(html);
+                $('#room-messages').scrollTop($('#room-messages').prop('scrollHeight'));
                 $(this).val('');
               }
             });

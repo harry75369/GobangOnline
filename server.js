@@ -58,11 +58,8 @@ io.configure(function() {
       accept(null, false);
     },
     success:      function(data, accept) {
-      if ( underscore.contains(connected_users, data.user.username) ) {
-        accept(null, false);
-      } else {
-        accept(null, true);
-      }
+      // TODO: manager.isXXX...
+      accept(null, true);
     }
   }));
 });
@@ -101,7 +98,7 @@ passport.use(new LocalStrategy(
       if ( !user ) {
         return done(null, false, {message: 'Invalid username/password!'});
       }
-      if ( underscore.contains(connected_users, username) ) {
+      if ( manager.isUserSignedIn(username) ) {
         return done(null, false, {message: 'User already signed in!'});
       }
       return done(null, user);
@@ -166,56 +163,151 @@ app.use(function(req, res, next) {
   res.sendfile(path.join(app.get('wwwroot'), '404.html'));
 });
 
-var connected_clients = [];
-var connected_users = [];
+var UserManager = function(server_socket) {
+  this.server_socket = server_socket;
+  this.connected_users = [];
+  this.user_rooms = {};
+};
+UserManager.prototype.connectUser = function(user_socket) {
+  // preprocessing
+  var username = user_socket.handshake.user.username;
+  var url = user_socket.handshake.headers.referer;
+  var reg = /\/room\/([^ \/]+)[\/]?$/;
+  var room = '';
+  if ( reg.test(url) ) {
+    room = url.match(reg)[1];
+  }
+
+  var msgs = [];
+
+  // deal with username
+  if ( !(underscore.contains(this.connected_users, username)) ) {
+    this.connected_users.push(username);
+    console.log("user connected:", username, room);
+  }
+  // deal with room
+  if ( !(underscore.isEmpty(room)) ) {
+    if ( this.user_rooms[username] ) {
+      if ( !(underscore.contains(this.user_rooms[username], room)) ) {
+        this.user_rooms[username].push(room);
+        var msg = username+" joined room "+room+".";
+        console.log("user joined room:", username, "->", room, this.user_rooms[username]);
+        msgs.push(msg);
+      }
+    } else {
+      this.user_rooms[username] = [room];
+    }
+    user_socket.join(room);
+  } else {
+    var msg = username+" joined lobby.";
+    this.user_rooms[username] = [];
+    console.log("user joined lobby:", username, this.user_rooms[username]);
+    msgs.push(msg);
+  }
+  return msgs;
+};
+UserManager.prototype.disconnectUser = function(user_socket) {
+  // preprocessing
+  var username = user_socket.handshake.user.username;
+  var url = user_socket.handshake.headers.referer;
+  var reg = /\/room\/([^ \/]+)[\/]?$/;
+  var room = '';
+  if ( reg.test(url) ) {
+    room = url.match(reg)[1];
+  }
+
+  var msgs = [];
+
+  if ( !(underscore.isEmpty(room)) ) {
+    if ( this.user_rooms[username] && underscore.contains(this.user_rooms[username], room) ) {
+      this.user_rooms[username].splice(this.user_rooms[username].indexOf(room), 1);
+      var msg = username+" left room "+room+".";
+      console.log("user left room:", username, "<-", room, this.user_rooms[username]);
+      msgs.push(msg);
+    }
+  } else {
+    var msg = username+" left lobby.";
+    console.log("user left lobby:", username, this.user_rooms[username]);
+    msgs.push(msg);
+    if ( !(this.user_rooms[username]) || underscore.isEmpty(this.user_rooms[username]) ) {
+      if ( underscore.contains(this.connected_users, username) ) {
+        this.connected_users.splice(this.connected_users.indexOf(username), 1);
+      }
+    }
+  }
+  console.log("user disconnected:", username, room);
+  return msgs;
+};
+UserManager.prototype.isUserSignedIn = function(username) {
+  if ( underscore.contains(this.connected_users, username) ) {
+    return true;
+  } else {
+    return false;
+  }
+};
+UserManager.prototype.sendUserList = function(user_socket) {
+  var user_rooms = this.user_rooms;
+  async.map(this.connected_users, function(username, callback) {
+    User.findOne({username:username}, function(err, user) {
+      if ( err ) callback(err);
+      var user_info = [];
+      user_info.push(user.username);
+      user_info.push(user.score);
+      user_info.push(user_rooms[username]);
+      callback(null, user_info);
+    });
+  },
+  function(err, user_list) {
+    if ( !err ) {
+      user_socket.emit('user list', user_list);
+    } else {
+      user_socket.emit('user list', "error getting user list");
+    }
+  });
+};
+UserManager.prototype.sendRoomList = function(user_socket) {
+  user_socket.emit('room list', this.server_socket.manager.rooms);
+};
+var manager = new UserManager(io.sockets);
 io.sockets.on('connection', function(client) {
-  var username = client.handshake.user.username;
-  console.log("user connected: ", username);
-  connected_clients.push(client);
-  connected_users.push(username);
+  io.sockets.emit('user update', manager.connectUser(client));
+  io.sockets.emit('room update');
 
   client.on('disconnect', function() {
-    connected_clients.splice(connected_clients.indexOf(client), 1);
-    connected_users.splice(connected_users.indexOf(username), 1);
-    console.log("user disconnected: ", username);
-    io.sockets.emit('user update', username+" disconnected.");
+    io.sockets.emit('user update', manager.disconnectUser(client));
     io.sockets.emit('room update');
   });
   client.on('message', function(data) {
     client.broadcast.send(data);
   });
-  client.on('join lobby', function(username) {
-    console.log("user joined lobby: ", username);
-    client.join(username);
-    io.sockets.emit('user update', username+" joined lobby.");
-    io.sockets.emit('room update');
-  });
   client.on('get user list', function() {
-    send_user_list(client);
+    //send_user_list(client);
+    manager.sendUserList(client);
   });
   client.on('get room list', function() {
-    send_room_list(client);
+    //send_room_list(client);
+    manager.sendRoomList(client);
   });
 });
 
-var send_user_list = function(socket) {
-  async.map(connected_clients, function(client, callback) {
-    User.findById(client.handshake.user.id, function(err, user) {
-      var user_info = [];
-      user_info.push(user.username);
-      user_info.push(user.score);
-      user_info.push(client.manager.roomClients[client.id]);
-      callback(null, user_info);
-    });
-  },
-  function(err, user_list) {
-    socket.emit('user list', user_list);
-  });
-};
+//var send_user_list = function(socket) {
+  //async.map(connected_clients, function(client, callback) {
+    //User.findById(client.handshake.user.id, function(err, user) {
+      //var user_info = [];
+      //user_info.push(user.username);
+      //user_info.push(user.score);
+      //user_info.push(client.manager.roomClients[client.id]);
+      //callback(null, user_info);
+    //});
+  //},
+  //function(err, user_list) {
+    //socket.emit('user list', user_list);
+  //});
+//};
 
-var send_room_list = function(socket) {
-  socket.emit('room list', io.sockets.manager.rooms);
-};
+//var send_room_list = function(socket) {
+  //socket.emit('room list', io.sockets.manager.rooms);
+//};
 
 
 // --------------------------------------------------------------- //

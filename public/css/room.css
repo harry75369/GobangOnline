@@ -1,0 +1,23 @@
+.pannel {
+  margin: 15px 0px 15px 0px;
+  padding: 10px 10px 10px 10px;
+  box-shadow: 10px 10px 15px 5px grey;
+  border-style: 2px solid;
+  border-radius: 5px;
+}
+.board-pannel {
+}
+.room-info-pannel {
+}
+.chat-pannel {
+}
+.messages {
+  height: 300px;
+  overflow: auto;
+  margin: 5px 5px 5px 5px;
+  padding: 5px 5px 5px 5px;
+  border-style: solid;
+  border-width: 2px;
+  border-radius: 5px;
+  border-color: #efefef;
+}
