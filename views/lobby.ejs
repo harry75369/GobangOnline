@@ -39,7 +39,7 @@
               </button>
               <a class="brand" href="/">GOBANG ONLINE</a>
               <div class="nav-collapse collapse">
-                <button class="btn"><i class="icon-plus"></i> New Room</button>
+                <a href="#new_room_dlg" class="btn" data-toggle="modal"><i class="icon-plus"></i> New Room</a>
                 <div class="btn-group pull-right">
                   <a href="#" class="btn dropdown-toggle" data-toggle="dropdown">
                     <i class="icon-user"></i> <%= username %> <i class="icon-caret-down"></i>
@@ -107,6 +107,17 @@
           </div>
           <div class="modal-footer">
             <button class="btn" data-dismiss="modal">OK</button>
+          </div>
+        </div>
+
+        <div id="new_room_dlg" class="modal hide fade">
+          <div class="modal-header">
+            <button class="close" data-dismiss="modal">&times;</button>
+            <h3>Room Name</h3>
+          </div>
+          <div class="modal-body">
+            <input id="new_room_name" class="input-block-level" autocomplete="off"/>
+            <div id="new_room_message"></div>
           </div>
         </div>
 
@@ -208,6 +219,22 @@
                 $('#lobby-messages').append(html);
                 $('#lobby-messages').scrollTop($('#lobby-messages').prop('scrollHeight'));
                 $(this).val('');
+              }
+            });
+            $('#new_room_dlg').on('shown', function() {
+              $('#new_room_message').text('');
+              $('#new_room_name').focus();
+            });
+            $('#new_room_name').keypress(function(e) {
+              if ( e.which == 13 ) {
+                var name = $(this).val();
+                var reg = /^[_a-zA-Z0-9]+$/;
+                if ( _.isEmpty(name) || !(reg.test(name)) ) {
+                  var error_msg = '<div class="alert alert-error">Wrong room name!</div>'
+                  $('#new_room_message').html(error_msg);
+                } else {
+                  window.location.replace("/room/"+name);
+                }
               }
             });
           });

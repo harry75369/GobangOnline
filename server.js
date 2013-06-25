@@ -84,6 +84,12 @@ User.update({username: 'bdahz'}, {password: 'bdahzz', score: 2}, {multi:false, u
             function (err) { if (err) throw new Error(err); })
 User.update({username: 'test'}, {password: 'test', score: 1}, {multi:false, upsert:true},
             function (err) { if (err) throw new Error(err); })
+User.update({username: 'test1'}, {password: 'test1', score: 1}, {multi:false, upsert:true},
+            function (err) { if (err) throw new Error(err); })
+User.update({username: 'test2'}, {password: 'test2', score: 1}, {multi:false, upsert:true},
+            function (err) { if (err) throw new Error(err); })
+User.update({username: 'test3'}, {password: 'test3', score: 1}, {multi:false, upsert:true},
+            function (err) { if (err) throw new Error(err); })
 
 
 // --- user module configurations
@@ -121,12 +127,19 @@ app.get('/', function(req, res) {
   if ( req.isUnauthenticated() ) {
     res.render('index', {'message': req.flash('error')});
   } else {
-    res.redirect('/game');
+    res.redirect('/lobby');
   }
 });
-app.get('/game', function(req, res) {
+app.get('/lobby', function(req, res) {
   if ( req.isAuthenticated() ) {
-    res.render('game', {'username': req.user.username});
+    res.render('lobby', {'username': req.user.username});
+  } else {
+    res.redirect('/');
+  }
+});
+app.get('/room/:name', function(req, res) {
+  if ( req.isAuthenticated() ) {
+    res.render('room', {'username': req.user.username, 'roomname': req.params.name});
   } else {
     res.redirect('/');
   }
