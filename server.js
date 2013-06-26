@@ -41,7 +41,6 @@ app.configure(function() {
   app.use(passport.session());
   app.use(app.router);
   app.use('/', express.static(app.get('wwwroot')));
-  app.use('/room', express.static(app.get('wwwroot')));
 });
 app.configure('development', function() {
   app.use(express.errorHandler());
@@ -172,11 +171,15 @@ var UserManager = function(server_socket) {
 var Room = function(name) {
   this.name = name;
   this.status = 'waiting';
+  this.turn = 0;
   this.player1 = '';
   this.player2 = '';
+  this.player1_status = "waiting";
+  this.player2_status = "waiting";
   this.time1 = 0;
   this.time2 = 0;
   this.observers = [];
+  this.records = [];
 };
 Room.prototype.addUser = function(username) {
   var observers = this.observers;
@@ -188,8 +191,10 @@ Room.prototype.addUser = function(username) {
   else { // if not, try to make the user a player (if not occupied)
     if ( underscore.isEmpty(this.player1) ) {
       this.player1 = username;
+      this.player1_status = 'waiting';
     } else if ( underscore.isEmpty(this.player2) ) {
       this.player2 = username;
+      this.player2_status = 'waiting';
     } else {
       observers.push(username);
     }
@@ -201,13 +206,20 @@ Room.prototype.delUser = function(username) {
     observers.splice(observers.indexOf(username), 1);
   }
   else {
+    var player_leave = false;
     if ( underscore.isEqual(username, this.player1) ) {
       this.player1 = '';
+      this.player1_status = 'waiting';
+      this.player2_status = 'waiting';
+      player_leave = true;
     } else if ( underscore.isEqual(username, this.player2) ) {
       this.player2 = '';
+      this.player1_status = 'waiting';
+      this.player2_status = 'waiting';
+      player_leave = true;
     }
-    if ( !(underscore.isEqual(this.status, "waiting")) ) {
-      // TODO:
+    if ( player_leave && !(underscore.isEqual(this.status, "waiting")) ) {
+      this.status = "waiting";
     }
   }
 };
@@ -224,7 +236,22 @@ Room.prototype.isEmpty = function() {
     && underscore.isEmpty(this.observers) )
       return true;
   return false;
-}
+};
+Room.prototype.isBothStarted = function() {
+  if ( !(underscore.isEmpty(this.player1))
+    && !(underscore.isEmpty(this.player2))
+    && underscore.isEqual(this.player1_status, "started")
+    && underscore.isEqual(this.player2_status, "started") )
+    return true;
+  return false;
+};
+Room.prototype.startNewGame = function() {
+  this.status = "started";
+  this.turn = 0;
+  this.time1 = 0;
+  this.time2 = 0;
+  this.records = [];
+};
 UserManager.prototype.connectUser = function(user_socket) {
   var users = this.users;
   var rooms = this.rooms;
@@ -379,6 +406,92 @@ UserManager.prototype.sendUserListInRoom = function(room, user_socket) {
 UserManager.prototype.sendRoomInfo = function(room, user_socket) {
   user_socket.emit('room info', this.rooms[room]);
 };
+UserManager.prototype.tryStartRoom = function(roomname, user_socket) {
+  var username = user_socket.handshake.user.username;
+  var users = this.users;
+  var room = this.rooms[roomname];
+  var fail = true;
+  var msg = '';
+  if ( !users[username] || underscore.isEmpty(users[username]) ) {
+    msg = "no such a user";
+  } else if ( room ) {
+    if ( underscore.isEqual(room.player1, username) ) {
+      if ( underscore.isEqual(room.player1_status, "waiting") ) {
+        fail = false;
+        room.player1_status = "started";
+      } else {
+        msg = "already started";
+      }
+    } else if ( underscore.isEqual(room.player2, username) ) {
+      if ( underscore.isEqual(room.player2_status, "waiting") ) {
+        fail = false;
+        room.player2_status = "started";
+      } else {
+        msg = "already started";
+      }
+    } else if ( underscore.contains(room.observers, username) ) {
+      msg = "observer can only watch";
+    } else {
+      msg = "not a user in this room";
+    }
+  } else {
+    msg = "no such a room";
+  }
+  if ( fail ) {
+    user_socket.emit('user start failure', msg);
+  } else {
+    if ( room.isBothStarted() ) {
+      room.startNewGame();
+      this.server_socket.emit('room update', ["room "+roomname+" started a game"]);
+    } else {
+      this.server_socket.in(roomname).emit('room update');
+    }
+    console.log(room);
+  }
+};
+UserManager.prototype.tryClick = function(roomname, user_socket, x, y) {
+  var username = user_socket.handshake.user.username;
+  var users = this.users;
+  var room = this.rooms[roomname];
+  var fail = true;
+  var msg = '';
+  if ( !users[username] || underscore.isEmpty(users[username]) ) {
+    msg = "no such a user";
+  } else if ( room ) {
+    if ( x <= 0 || x >= 16 || y <= 0 || y >= 16 ) {
+      msg = "click out of range";
+    } else if ( underscore.isEqual(room.status, "waiting") ) {
+      msg = "game not started";
+    } else if ( underscore.isEqual(room.player1, username) ) {
+      if ( underscore.isEqual(room.player1_status, "started") && this.turn==0 ) {
+        fail = false;
+        this.turn = 1 - this.turn;
+        this.records.push(['#000', x, y]);
+      } else {
+        msg = "not your turn";
+      }
+    } else if ( underscore.isEqual(room.player2, username) ) {
+      if ( underscore.isEqual(room.player2_status, "started") && this.turn==1 ) {
+        fail = false;
+        this.turn = 1 - this.turn;
+        this.records.push(['#fff', x, y]);
+      } else {
+        msg = "not your turn";
+      }
+    } else if ( underscore.contains(room.observers, username) ) {
+      msg = "observer can only watch";
+    } else {
+      msg = "not a user in this room";
+    }
+  } else {
+    msg = "no such a room";
+  }
+
+  if ( !fail ) {
+    console.log("user click:", username, x, y);
+    user_socket.emit('room update', username+" click ("+x+", "+y+")");
+  }
+};
 var manager = new UserManager(io.sockets);
 io.sockets.on('connection', function(client) {
   manager.connectUser(client);
@@ -403,6 +516,12 @@ io.sockets.on('connection', function(client) {
   });
   client.on('get room info', function(room) {
     manager.sendRoomInfo(room, client);
+  });
+  client.on('user start', function(room) {
+    manager.tryStartRoom(room, client);
+  });
+  client.on('user click', function(room, x, y) {
+    manager.tryClick(room, client, x, y);
   });
 });
 
