@@ -163,6 +163,7 @@
                   }
                 }
                 trs += '<td>'+rooms+'</td>';
+                trs += '</tr>';
               }
               $('#user-list').html(trs);
             }
@@ -176,7 +177,11 @@
                 for ( var room_name in data ) {
                   if ( room_name && !(_.isEmpty(room_name)) ) {
                     count++;
-                    row += '<div class="span3"><a href="/room'+room_name+'" class="button button-pill button-primary">'+room_name.substr(1)+'</a></div>';
+                    if ( data[room_name]['status'] && _.isEqual(data[room_name]['status'], "waiting") ) {
+                      row += '<div class="span3"><a href="/room/'+room_name+'" class="button glow button-pill button-primary">'+room_name+'</a></div>';
+                    } else {
+                      row += '<div class="span3"><a href="/room/'+room_name+'" class="button button-pill button-primary">'+room_name+'</a></div>';
+                    }
                   }
                   delete data[room_name];
                   if ( count==4 ) break;
@@ -239,7 +244,7 @@
                 var name = $(this).val();
                 var reg = /^[_a-zA-Z0-9]+$/;
                 if ( _.isEmpty(name) || !(reg.test(name)) ) {
-                  var error_msg = '<div class="alert alert-error">Wrong room name!</div>'
+                  var error_msg = '<div class="alert alert-error">Invalid room name!</div>'
                   $('#new_room_message').html(error_msg);
                 } else {
                   window.location.replace("/room/"+name);

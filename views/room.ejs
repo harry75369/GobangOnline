@@ -63,6 +63,13 @@
             <div class="pannel board-pannel span8"></div>
             <div class="span4">
               <div class="row-fluid">
+                <div class="pannel chat-pannel span12">
+                  <h3>Messages</h3>
+                  <div class="messages" id="room-messages"></div>
+                  <input id="send-message" class="input-block-level" autocomplete="off"/>
+                </div>
+              </div>
+              <div class="row-fluid">
                 <div class="pannel game-info-pannel span12">
                   <div class="row-fluid">
                     <i class="icon-user icon-5x span4"></i>
@@ -84,6 +91,7 @@
               </div>
               <div class="row-fluid">
                 <div class="pannel user-info-pannel span12">
+                  <h3>Room - <%= roomname %></h3>
                   <table class="table table-condensed table-hover">
                     <thead>
                       <tr>
@@ -96,13 +104,6 @@
                     </tbody>
                   </table>
                 </div>
-              <div class="row-fluid">
-                <div class="pannel chat-pannel span12">
-                  <h3>Messages</h3>
-                  <div class="messages" id="room-messages"></div>
-                  <input id="send-message" class="input-block-level" autocomplete="off"/>
-                </div>
-              </div>
             </div>
           </div>
         </div><!-- room -->
@@ -143,6 +144,37 @@
           var socket = io.connect();
           socket.on('error', function() {
             window.location.replace("/error.html");
+          });
+          socket.on('user update in room', function(messages) {
+            if ( messages && !(_.isEmpty(messages)) ) {
+              for ( var i=0; i<messages.length; i++ ) {
+                var html = "<i>"+messages[i]+"</i><br/>"
+                $('#room-messages').append(html);
+                $('#room-messages').scrollTop($('#room-messages').prop('scrollHeight'));
+              }
+            }
+            socket.emit('get user list in room', '<%= roomname %>');
+          });
+          socket.on('user list in room', function(data) {
+            if ( !(_.isEmpty(data)) ) {
+              if ( typeof data == "string" ) {
+                $('#user-list').html('<div class="alert alert-error">'+data+'</div>');
+                return;
+              }
+              var trs = '';
+              for ( var i=0; i < data.length; i++ ) {
+                trs += '<tr>';
+                trs += '<td>'+data[i][0]+'</td>';
+                trs += '<td>'+data[i][1]+'</td>';
+                if ( !data[i][2]) {
+                  trs += '<td>observer</td>';
+                } else {
+                  trs += '<td>player</td>';
+                }
+                trs += '</tr>';
+              }
+              $('#user-list').html(trs);
+            }
           });
           socket.on('private message', function(html) {
             $('#room-messages').append(html);

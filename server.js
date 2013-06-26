@@ -7,6 +7,7 @@ var express = require('express')                     // Web Framework
   , mongoose = require('mongoose')                   // Database Module
   , underscore = require('underscore')               // Javascript Utility
   , async = require('async')                         // Async-programming Utility
+  , assert = require('assert')                       // Test Utility
   , path = require('path');                          // System Utility
 
 
@@ -165,95 +166,161 @@ app.use(function(req, res, next) {
 
 var UserManager = function(server_socket) {
   this.server_socket = server_socket;
-  this.connected_users = [];
-  this.user_rooms = {};
+  this.users = {};
+  this.rooms = {};
+};
+var Room = function(name) {
+  this.name = name;
+  this.status = 'waiting';
+  this.player1 = '';
+  this.player2 = '';
+  this.time1 = 0;
+  this.time2 = 0;
+  this.observers = [];
+};
+Room.prototype.addUser = function(username) {
+  var observers = this.observers;
+  // if this room is holding a game, add user to observers
+  if ( !(underscore.isEqual(this.status, "waiting")) ) {
+    assert(this.player1&&this.player2, "null players!");
+    observers.push(username);
+  }
+  else { // if not, try to make the user a player (if not occupied)
+    if ( underscore.isEmpty(this.player1) ) {
+      this.player1 = username;
+    } else if ( underscore.isEmpty(this.player2) ) {
+      this.player2 = username;
+    } else {
+      observers.push(username);
+    }
+  }
+};
+Room.prototype.delUser = function(username) {
+  var observers = this.observers;
+  if ( underscore.contains(observers, username) ) {
+    observers.splice(observers.indexOf(username), 1);
+  }
+  else {
+    if ( underscore.isEqual(username, this.player1) ) {
+      this.player1 = '';
+    } else if ( underscore.isEqual(username, this.player2) ) {
+      this.player2 = '';
+    }
+    if ( !(underscore.isEqual(this.status, "waiting")) ) {
+      // TODO:
+    }
+  }
+};
+Room.prototype.isPlayer = function(username) {
+  if ( underscore.isEqual(username, this.player1)
+    || underscore.isEqual(username, this.player2) ) {
+      return true;
+  }
+  return false;
 };
 UserManager.prototype.connectUser = function(user_socket) {
+  var users = this.users;
+  var rooms = this.rooms;
+  var server_socket = this.server_socket;
+
   // preprocessing
   var username = user_socket.handshake.user.username;
   var url = user_socket.handshake.headers.referer;
   var reg = /\/room\/([^ \/]+)[\/]?$/;
-  var room = '';
+  var roomname = '';
   if ( reg.test(url) ) {
-    room = url.match(reg)[1];
+    roomname = url.match(reg)[1];
   }
-
   var msgs = [];
 
-  // deal with username
-  if ( !(underscore.contains(this.connected_users, username)) ) {
-    this.connected_users.push(username);
-    console.log("user connected:", username, room);
-  }
-  // deal with room
-  if ( !(underscore.isEmpty(room)) ) {
-    if ( this.user_rooms[username] ) {
-      if ( !(underscore.contains(this.user_rooms[username], room)) ) {
-        this.user_rooms[username].push(room);
-        var msg = username+" joined room "+room+".";
-        console.log("user joined room:", username, "->", room, this.user_rooms[username]);
-        msgs.push(msg);
-      }
-    } else {
-      this.user_rooms[username] = [room];
-    }
-    user_socket.join(room);
+  // set up data structures
+  if ( users[username] ) {
+    users[username].push(roomname);
   } else {
-    var msg = username+" joined lobby.";
-    this.user_rooms[username] = [];
-    console.log("user joined lobby:", username, this.user_rooms[username]);
-    msgs.push(msg);
+    users[username] = [roomname];
   }
-  return msgs;
+  if ( !(underscore.isEmpty(roomname)) ) {
+    if ( !rooms[roomname] ) rooms[roomname] = new Room(roomname);
+    rooms[roomname].addUser(username);
+  }
+  console.log(users);
+  console.log(rooms);
+
+  // messages
+  console.log("user connected:", username);
+  console.log("user joined room:", username, roomname);
+  if ( !(underscore.isEmpty(roomname)) ) {
+    user_socket.join(roomname);
+    msgs.push(username+" joined room "+roomname+".");
+  } else {
+    msgs.push(username+" joined lobby.");
+  }
+
+  // emit signals
+  server_socket.emit('user update', msgs);
+  server_socket.emit('room update');
+  if ( !(underscore.isEmpty(roomname)) ) {
+    server_socket.in(roomname).emit('user update in room', msgs);
+  }
 };
 UserManager.prototype.disconnectUser = function(user_socket) {
+  var users = this.users;
+  var rooms = this.rooms;
+  var server_socket = this.server_socket;
+
   // preprocessing
   var username = user_socket.handshake.user.username;
   var url = user_socket.handshake.headers.referer;
   var reg = /\/room\/([^ \/]+)[\/]?$/;
-  var room = '';
+  var roomname = '';
   if ( reg.test(url) ) {
-    room = url.match(reg)[1];
+    roomname = url.match(reg)[1];
   }
-
   var msgs = [];
 
-  if ( !(underscore.isEmpty(room)) ) {
-    if ( this.user_rooms[username] && underscore.contains(this.user_rooms[username], room) ) {
-      this.user_rooms[username].splice(this.user_rooms[username].indexOf(room), 1);
-      var msg = username+" left room "+room+".";
-      console.log("user left room:", username, "<-", room, this.user_rooms[username]);
-      msgs.push(msg);
-    }
-  } else {
-    var msg = username+" left lobby.";
-    console.log("user left lobby:", username, this.user_rooms[username]);
-    msgs.push(msg);
-    if ( !(this.user_rooms[username]) || underscore.isEmpty(this.user_rooms[username]) ) {
-      if ( underscore.contains(this.connected_users, username) ) {
-        this.connected_users.splice(this.connected_users.indexOf(username), 1);
-      }
+  // deal with data structures
+  if ( users[username] ) {
+    users[username].splice(users[username].indexOf(roomname), 1);
+  }
+  if ( !(underscore.isEmpty(roomname)) ) {
+    if ( rooms[roomname] ) {
+      rooms[roomname].delUser(username);
     }
   }
-  console.log("user disconnected:", username, room);
-  return msgs;
+  console.log(users);
+  console.log(rooms);
+
+  // messages
+  console.log("user disconnected:", username);
+  if ( !(underscore.isEmpty(roomname)) ) {
+    console.log("user left room:", username, roomname);
+    msgs.push(username+" left room "+roomname+".");
+  } else {
+    console.log("user left lobby:", username);
+    msgs.push(username+" left lobby.");
+  }
+
+  // emit signals
+  server_socket.emit('user update', msgs);
+  server_socket.emit('room update');
+  if ( !(underscore.isEmpty(roomname)) ) {
+    server_socket.in(roomname).emit('user update in room', msgs);
+  }
 };
 UserManager.prototype.isUserSignedIn = function(username) {
-  if ( underscore.contains(this.connected_users, username) ) {
-    return true;
-  } else {
-    return false;
-  }
+  var users = this.users;
+  return ( users[username] && !(underscore.isEmpty(users[username])) );
 };
 UserManager.prototype.sendUserList = function(user_socket) {
-  var user_rooms = this.user_rooms;
-  async.map(this.connected_users, function(username, callback) {
+  var users = this.users;
+  var usernames = Object.keys(users);
+  async.map(usernames, function(username, callback) {
     User.findOne({username:username}, function(err, user) {
-      if ( err ) callback(err);
+      if ( err ) return callback(err);
       var user_info = [];
       user_info.push(user.username);
       user_info.push(user.score);
-      user_info.push(user_rooms[username]);
+      user_info.push(users[username]);
       callback(null, user_info);
     });
   },
@@ -266,16 +333,45 @@ UserManager.prototype.sendUserList = function(user_socket) {
   });
 };
 UserManager.prototype.sendRoomList = function(user_socket) {
-  user_socket.emit('room list', this.server_socket.manager.rooms);
+  user_socket.emit('room list', this.rooms);
+};
+UserManager.prototype.sendUserListInRoom = function(room, user_socket) {
+  var users = this.users;
+  var rooms = this.rooms;
+  var usernames = Object.keys(users);
+  async.filter(usernames, function(username, callback) {
+    if ( underscore.contains(users[username], room) ) {
+      callback(true);
+    } else {
+      callback(false);
+    }
+  },
+  function(results) {
+    async.map(results, function(username, callback) {
+      User.findOne({username:username}, function(err, user) {
+        if ( err ) return callback(err);
+        var user_info = [];
+        user_info.push(user.username);
+        user_info.push(user.score);
+        user_info.push(rooms[room].isPlayer(username));
+        callback(null, user_info);
+      });
+    },
+    function(err, user_list) {
+      if ( !err ) {
+        user_socket.emit('user list in room', user_list);
+      } else {
+        user_socket.emit('user list in room', "error getting user list");
+      }
+    });
+  });
 };
 var manager = new UserManager(io.sockets);
 io.sockets.on('connection', function(client) {
-  io.sockets.emit('user update', manager.connectUser(client));
-  io.sockets.emit('room update');
+  manager.connectUser(client);
 
   client.on('disconnect', function() {
-    io.sockets.emit('user update', manager.disconnectUser(client));
-    io.sockets.emit('room update');
+    manager.disconnectUser(client);
   });
   client.on('public message', function(data) {
     client.broadcast.emit('public message', data);
@@ -288,6 +384,9 @@ io.sockets.on('connection', function(client) {
   });
   client.on('get room list', function() {
     manager.sendRoomList(client);
+  });
+  client.on('get user list in room', function(room) {
+    manager.sendUserListInRoom(room, client);
   });
 });
 
