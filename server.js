@@ -366,6 +366,9 @@ UserManager.prototype.sendUserListInRoom = function(room, user_socket) {
     });
   });
 };
+UserManager.prototype.sendRoomInfo = function(room, user_socket) {
+  user_socket.emit('room info', this.rooms[room]);
+};
 var manager = new UserManager(io.sockets);
 io.sockets.on('connection', function(client) {
   manager.connectUser(client);
@@ -387,6 +390,9 @@ io.sockets.on('connection', function(client) {
   });
   client.on('get user list in room', function(room) {
     manager.sendUserListInRoom(room, client);
+  });
+  client.on('get room info', function(room) {
+    manager.sendRoomInfo(room, client);
   });
 });
 
