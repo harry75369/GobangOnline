@@ -218,6 +218,13 @@ Room.prototype.isPlayer = function(username) {
   }
   return false;
 };
+Room.prototype.isEmpty = function() {
+  if ( underscore.isEmpty(this.player1)
+    && underscore.isEmpty(this.player2)
+    && underscore.isEmpty(this.observers) )
+      return true;
+  return false;
+}
 UserManager.prototype.connectUser = function(user_socket) {
   var users = this.users;
   var rooms = this.rooms;
@@ -285,6 +292,9 @@ UserManager.prototype.disconnectUser = function(user_socket) {
   if ( !(underscore.isEmpty(roomname)) ) {
     if ( rooms[roomname] ) {
       rooms[roomname].delUser(username);
+    }
+    if ( rooms[roomname].isEmpty() ) {
+      delete rooms[roomname];
     }
   }
   console.log(users);

@@ -169,7 +169,7 @@
             }
           });
           socket.on('room list', function(data) {
-            if ( !(_.isEmpty(data)) ) {
+            if ( data ) {
               var html = "";
               while ( !_.isEmpty(data) ) {
                 var count = 0;
