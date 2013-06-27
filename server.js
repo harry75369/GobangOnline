@@ -252,6 +252,16 @@ Room.prototype.startNewGame = function() {
   this.time2 = 0;
   this.records.length = 0;
 };
+Room.prototype.isPositionOccupied = function(x, y) {
+  for ( var i=0; i < this.records.length; i++ ) {
+    var step = this.records[i];
+    if ( underscore.isEqual(step[1], x)
+      && underscore.isEqual(step[2], y) ) {
+      return true;
+    }
+  }
+  return false;
+};
 UserManager.prototype.connectUser = function(user_socket) {
   var users = this.users;
   var rooms = this.rooms;
@@ -463,17 +473,25 @@ UserManager.prototype.tryClick = function(roomname, user_socket, x, y) {
       msg = "game not started";
     } else if ( underscore.isEqual(room.player1, username) ) {
       if ( underscore.isEqual(room.player1_status, "started") && underscore.isEqual(room.turn,0) ) {
-        fail = false;
-        room.turn = 1 - room.turn;
-        room.records.push(['#000', x, y]);
+        if ( !(room.isPositionOccupied(x, y)) ) {
+          fail = false;
+          room.turn = 1 - room.turn;
+          room.records.push(['#000', x, y]);
+        } else {
+          msg = "position occupied";
+        }
       } else {
         msg = "not your turn, turn="+room.turn;
       }
     } else if ( underscore.isEqual(room.player2, username) ) {
       if ( underscore.isEqual(room.player2_status, "started") && underscore.isEqual(room.turn,1) ) {
-        fail = false;
-        room.turn = 1 - room.turn;
-        room.records.push(['#fff', x, y]);
+        if ( !(room.isPositionOccupied(x, y)) ) {
+          fail = false;
+          room.turn = 1 - room.turn;
+          room.records.push(['#fff', x, y]);
+        } else {
+          msg = "position occupied";
+        }
       } else {
         msg = "not your turn, turn="+room.turn;
       }
