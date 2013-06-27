@@ -148,6 +148,18 @@ app.post('/', function(req, res, next) {
     });
   })(req, res, next);
 });
+app.post('/register', function(req, res, next) {
+  var username = req.body['register-username'];
+  var password = req.body['register-password'];
+  var confirm_password = req.body['register-confirm-password'];
+  var reg = /^[a-zA-Z0-9]+$/;
+  if ( reg.test(username) && underscore.isEqual(password, confirm_password) ) {
+    console.log("register:", username);
+    User.update({username: username}, {password: password, score: 0}, {multi:false, upsert:true},
+            function (err) { if (err) throw new Error(err); })
+  }
+  res.redirect('/');
+});
 app.use(function(req, res, next) {
   res.status(404);
   res.sendfile(path.join(app.get('wwwroot'), '404.html'));
@@ -252,6 +264,16 @@ Room.prototype.endGame = function(winner) {
   this.status = "waiting";
   this.player1_status = "waiting";
   this.player2_status = "waiting";
+  User.findOne({username:winner}, function(err, user) {
+    var score = user.score + 1;
+    User.update({username:winner}, {score:score}, function(err) {
+      if ( err ) {
+        console.log("add score failed:", winner);
+      } else {
+        console.log("add score succeeded:", winner);
+      }
+    });
+  });
 };
 Room.prototype.gameover = function(x, y) {
   var records = this.records;
@@ -555,6 +577,8 @@ UserManager.prototype.tryClick = function(roomname, user_socket, x, y) {
       console.log("user wins:", username);
       room.endGame(username);
       msgs.push(username+" wins");
+      this.server_socket.in(roomname).emit('user update in room');
+      this.server_socket.emit('user update', [username+" wins a game, score+=1."]);
     }
     this.server_socket.in(roomname).emit('room update', msgs);
   } else {
