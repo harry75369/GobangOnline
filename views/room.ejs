@@ -187,8 +187,14 @@
               $('#player2').text(data['player2']);
               if ( !(_.isEqual(data['player1_status'], "waiting"))
                 && !(_.isEqual(data['player2_status'], "waiting")) ) {
-                $('#player1-status').text(data['time1']);
-                $('#player2-status').text(data['time2']);
+                var html = '<i class="icon-hand-up"></i>';
+                if ( _.isEqual(data['turn'], 0) ) {
+                  $('#player1-status').html(html);
+                  $('#player2-status').html('');
+                } else {
+                  $('#player1-status').html('');
+                  $('#player2-status').html(html);
+                }
               } else {
                 $('#player1-status').text(data['player1_status']);
                 $('#player2-status').text(data['player2_status']);

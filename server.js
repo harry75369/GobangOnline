@@ -176,8 +176,6 @@ var Room = function(name) {
   this.player2 = '';
   this.player1_status = "waiting";
   this.player2_status = "waiting";
-  this.time1 = 0;
-  this.time2 = 0;
   this.observers = [];
   this.records = [];
 };
@@ -248,8 +246,6 @@ Room.prototype.isBothStarted = function() {
 Room.prototype.startNewGame = function() {
   this.status = "started";
   this.turn = 0;
-  this.time1 = 0;
-  this.time2 = 0;
   this.records.length = 0;
 };
 Room.prototype.isPositionOccupied = function(x, y) {
