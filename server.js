@@ -77,16 +77,6 @@ var User = mongoose.model('User', new mongoose.Schema({
 }));
 User.update({username: 'admin'}, {password: 'admin', score: 0}, {multi:false, upsert:true},
             function (err) { if (err) throw new Error(err); })
-User.update({username: 'bdahz'}, {password: 'bdahzz', score: 2}, {multi:false, upsert:true},
-            function (err) { if (err) throw new Error(err); })
-User.update({username: 'test'}, {password: 'test', score: 1}, {multi:false, upsert:true},
-            function (err) { if (err) throw new Error(err); })
-User.update({username: 'test1'}, {password: 'test1', score: 1}, {multi:false, upsert:true},
-            function (err) { if (err) throw new Error(err); })
-User.update({username: 'test2'}, {password: 'test2', score: 1}, {multi:false, upsert:true},
-            function (err) { if (err) throw new Error(err); })
-User.update({username: 'test3'}, {password: 'test3', score: 1}, {multi:false, upsert:true},
-            function (err) { if (err) throw new Error(err); })
 
 
 // --- user module configurations
