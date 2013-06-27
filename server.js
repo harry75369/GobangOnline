@@ -258,6 +258,59 @@ Room.prototype.isPositionOccupied = function(x, y) {
   }
   return false;
 };
+Room.prototype.endGame = function(winner) {
+  this.status = "waiting";
+  this.player1_status = "waiting";
+  this.player2_status = "waiting";
+};
+Room.prototype.gameover = function(x, y) {
+  var records = this.records;
+  var curr = [];
+  for ( var i=0; i < records.length; i++ ) {
+    var step = records[i];
+    if ( underscore.isEqual(step[1], x)
+      && underscore.isEqual(step[2], y) ) {
+      curr = step;
+      break;
+    }
+  }
+  var rows = [];
+  var dirs = [[1,0],[1,1],[0,1],[-1,1]];
+  for ( var i=0; i < dirs.length; i++ ) {
+    var dir = dirs[i];
+    var row = [];
+    for ( var j=-4; j <= 4; j++ ) {
+      var p = [];
+      p.push(curr[0]);
+      p.push(curr[1]+j*dir[0]);
+      p.push(curr[2]+j*dir[1]);
+      row.push(p);
+    }
+    rows.push(row);
+  }
+  var equal_contains = function(records, record) {
+    for ( var i=0; i < records.length; i++ ) {
+      if ( underscore.isEqual(records[i], record) )
+        return true;
+    }
+    return false;
+  }
+  for ( var i=0; i < rows.length; i++ ) {
+    var row = rows[i];
+    assert(underscore.isEqual(row.length, 9), "invalid row");
+    for ( var j=0; j < 5; j++ ) {
+      //console.log("checking", row[j], row[j+1], row[j+2], row[j+3], row[j+4]);
+      if ( equal_contains(records, row[j])
+        && equal_contains(records, row[j+1])
+        && equal_contains(records, row[j+2])
+        && equal_contains(records, row[j+3])
+        && equal_contains(records, row[j+4]) ) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
 UserManager.prototype.connectUser = function(user_socket) {
   var users = this.users;
   var rooms = this.rooms;
@@ -329,6 +382,9 @@ UserManager.prototype.disconnectUser = function(user_socket) {
     if ( rooms[roomname].isEmpty() ) {
       delete rooms[roomname];
     }
+  }
+  if ( underscore.isEmpty(users[username]) ) {
+    delete users[username];
   }
   console.log(users);
   console.log(rooms);
@@ -503,7 +559,14 @@ UserManager.prototype.tryClick = function(roomname, user_socket, x, y) {
   if ( !fail ) {
     console.log(room);
     console.log("user click:", username, x, y);
-    this.server_socket.in(roomname).emit('room update', [username+" click ("+x+", "+y+")"]);
+    var msgs = [];
+    msgs.push(username+" click ("+x+", "+y+")");
+    if ( room.gameover(x, y) ) {
+      console.log("user wins:", username);
+      room.endGame(username);
+      msgs.push(username+" wins");
+    }
+    this.server_socket.in(roomname).emit('room update', msgs);
   } else {
     user_socket.emit('user click failure', msg);
   }
