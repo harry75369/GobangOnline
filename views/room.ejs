@@ -229,10 +229,9 @@
             alert(data);
           });
           $(document).ready(function() {
-            drawBoard();
+            drawGobang();
             addClickListener();
             window.onresize = function() {
-              drawBoard();
               drawGobang();
             };
             $('#send-message').focus();
@@ -302,7 +301,10 @@
             $('#board-canvas').drawArc({fillStyle:"#000",x:8*dlen,y:8*dlen,radius:dlen/9});
           };
           var drawGobang = function() {
-            if ( gobang_cache && !(_.isEmpty(gobang_cache)) ) {
+            drawBoard();
+            var canvas = document.getElementById('board-canvas');
+            var dlen = canvas.width / 16;
+            if ( gobang_cache ) {
               for ( var i=0; i < gobang_cache.length; i++ ) {
                 var step = gobang_cache[i];
                 $('#board-canvas').drawArc({fillStyle:step[0],x:step[1]*dlen,y:step[2]*dlen,radius:dlen*0.45});

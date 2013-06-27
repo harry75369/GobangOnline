@@ -250,7 +250,7 @@ Room.prototype.startNewGame = function() {
   this.turn = 0;
   this.time1 = 0;
   this.time2 = 0;
-  this.records = [];
+  this.records.length = 0;
 };
 UserManager.prototype.connectUser = function(user_socket) {
   var users = this.users;
@@ -462,20 +462,20 @@ UserManager.prototype.tryClick = function(roomname, user_socket, x, y) {
     } else if ( underscore.isEqual(room.status, "waiting") ) {
       msg = "game not started";
     } else if ( underscore.isEqual(room.player1, username) ) {
-      if ( underscore.isEqual(room.player1_status, "started") && underscore.isEqual(this.turn,0) ) {
+      if ( underscore.isEqual(room.player1_status, "started") && underscore.isEqual(room.turn,0) ) {
         fail = false;
-        this.turn = 1 - this.turn;
-        this.records.push(['#000', x, y]);
+        room.turn = 1 - room.turn;
+        room.records.push(['#000', x, y]);
       } else {
-        msg = "not your turn";
+        msg = "not your turn, turn="+room.turn;
       }
     } else if ( underscore.isEqual(room.player2, username) ) {
-      if ( underscore.isEqual(room.player2_status, "started") && underscore.isEqual(this.turn,1) ) {
+      if ( underscore.isEqual(room.player2_status, "started") && underscore.isEqual(room.turn,1) ) {
         fail = false;
-        this.turn = 1 - this.turn;
-        this.records.push(['#fff', x, y]);
+        room.turn = 1 - room.turn;
+        room.records.push(['#fff', x, y]);
       } else {
-        msg = "not your turn";
+        msg = "not your turn, turn="+room.turn;
       }
     } else if ( underscore.contains(room.observers, username) ) {
       msg = "observer can only watch";
@@ -487,8 +487,9 @@ UserManager.prototype.tryClick = function(roomname, user_socket, x, y) {
   }
 
   if ( !fail ) {
+    console.log(room);
     console.log("user click:", username, x, y);
-    user_socket.emit('room update', username+" click ("+x+", "+y+")");
+    this.server_socket.in(roomname).emit('room update', [username+" click ("+x+", "+y+")"]);
   } else {
     user_socket.emit('user click failure', msg);
   }
