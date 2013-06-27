@@ -161,7 +161,14 @@
             }
             socket.emit('get user list in room', '<%= roomname %>');
           });
-          socket.on('room update', function(data) {
+          socket.on('room update', function(messages) {
+            if ( messages && !(_.isEmpty(messages)) ) {
+              for ( var i=0; i<messages.length; i++ ) {
+                var html = "<i>"+messages[i]+"</i><br/>"
+                $('#room-messages').append(html);
+                $('#room-messages').scrollTop($('#room-messages').prop('scrollHeight'));
+              }
+            }
             socket.emit('get room info', '<%= roomname %>');
           });
           socket.on('room info', function(data) {
@@ -216,6 +223,9 @@
             $('#room-messages').scrollTop($('#room-messages').prop('scrollHeight'));
           });
           socket.on('user start failure', function(data) {
+            alert(data);
+          });
+          socket.on('user click failure', function(data) {
             alert(data);
           });
           $(document).ready(function() {

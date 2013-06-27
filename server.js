@@ -440,11 +440,10 @@ UserManager.prototype.tryStartRoom = function(roomname, user_socket) {
   if ( fail ) {
     user_socket.emit('user start failure', msg);
   } else {
+    this.server_socket.in(roomname).emit('room update', [username+" started"]);
     if ( room.isBothStarted() ) {
       room.startNewGame();
       this.server_socket.emit('room update', ["room "+roomname+" started a game"]);
-    } else {
-      this.server_socket.in(roomname).emit('room update');
     }
     console.log(room);
   }
@@ -463,7 +462,7 @@ UserManager.prototype.tryClick = function(roomname, user_socket, x, y) {
     } else if ( underscore.isEqual(room.status, "waiting") ) {
       msg = "game not started";
     } else if ( underscore.isEqual(room.player1, username) ) {
-      if ( underscore.isEqual(room.player1_status, "started") && this.turn==0 ) {
+      if ( underscore.isEqual(room.player1_status, "started") && underscore.isEqual(this.turn,0) ) {
         fail = false;
         this.turn = 1 - this.turn;
         this.records.push(['#000', x, y]);
@@ -471,7 +470,7 @@ UserManager.prototype.tryClick = function(roomname, user_socket, x, y) {
         msg = "not your turn";
       }
     } else if ( underscore.isEqual(room.player2, username) ) {
-      if ( underscore.isEqual(room.player2_status, "started") && this.turn==1 ) {
+      if ( underscore.isEqual(room.player2_status, "started") && underscore.isEqual(this.turn,1) ) {
         fail = false;
         this.turn = 1 - this.turn;
         this.records.push(['#fff', x, y]);
@@ -490,6 +489,8 @@ UserManager.prototype.tryClick = function(roomname, user_socket, x, y) {
   if ( !fail ) {
     console.log("user click:", username, x, y);
     user_socket.emit('room update', username+" click ("+x+", "+y+")");
+  } else {
+    user_socket.emit('user click failure', msg);
   }
 };
 var manager = new UserManager(io.sockets);
