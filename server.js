@@ -14,6 +14,7 @@ app.configure(function() {
 
 app.use(app.router);
 app.use(function(req, res, next) {
+  console.log(req);
   res.status(404);
   res.sendfile(path.join(app.get('wwwroot'), '404.html'));
 });
