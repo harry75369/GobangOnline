@@ -69,13 +69,30 @@ passport.deserializeUser(function(id, done) {
 //
 // --------------------------------------------------------------- //
 app.get('/', function(req, res) {
-  res.render('index');
+  if ( req.isUnauthenticated() ) {
+    res.render('index');
+  } else {
+    res.redirect('/lobby');
+  }
 });
 app.get('/lobby', function(req, res) {
-  res.render('lobby');
+  if ( req.isAuthenticated() ) {
+    res.render('lobby', {'username': req.user.username});
+  } else {
+    res.redirect('/');
+  }
 });
 app.get('/room/:id', function(req, res) {
-  res.render('room', {'roomid': req.params.id});
+  if ( req.isAuthenticated() ) {
+    res.render('room', {'roomid': req.params.id,
+                        'username': req.user.username });
+  } else {
+    res.redirect('/');
+  }
+});
+app.get('/logout', function(req, res) {
+  if ( req.isAuthenticated() ) { req.logOut(); }
+  res.redirect('/');
 });
 // TODO: failure flash
 app.post('/', passport.authenticate('local', { failureRedirect: '/',
