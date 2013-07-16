@@ -59,7 +59,7 @@
         <div class="container">
 
           <div class="row">
-            <div class="span2 well pull-left">
+            <div id='user-list' class="span2 well pull-left">
               <label>Online User</label>
               <table class="table table-condensed">
                 <thead>
@@ -89,10 +89,10 @@
               </table>
             </div>
             <div class="span9 pull-right">
-              <div class="row well" style="background-color:green">
+              <div id="room-list" class="row well">
                 right-up
               </div>
-              <div class="row well" style="background-color:blue">
+              <div id="lobby-messages" class="row well">
                 right-down
               </div>
             </div>
@@ -129,5 +129,7 @@
             g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
             s.parentNode.insertBefore(g,s)}(document,'script'));
         </script>-->
+
+        <script src='/socket.io/socket.io.js' type='text/javascript'></script>
     </body>
 </html>

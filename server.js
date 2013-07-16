@@ -1,6 +1,6 @@
 var express = require('express')    // Web Framework
   , http = require('http')          // HTTP Server
-  , socket = require('socket.io')   // WebSocket Server
+  , socket = require('./socket')    // WebSocket Server
   , passport = require('passport')  // User Module
   , mongoose = require('mongoose')  // Database Module
   , path = require('path');         // System Utility
